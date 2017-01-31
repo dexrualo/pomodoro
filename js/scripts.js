@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById('work-plus').onclick = function(){
     pomodoro.setWorkDuration(pomodoro.getWorkDuration() + 1);
     document.getElementById('work-minutes').innerHTML = pomodoro.getWorkDuration();
-    if (pomodoro.getType() == "work")
+    if (pomodoro.getType() == "Session")
       document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
   };
 
