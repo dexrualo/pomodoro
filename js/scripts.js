@@ -1,6 +1,6 @@
 var Pomodoro = function(workTimeInSecs, breakTimeInSecs){
   var worker = undefined;
-  var periods = [{type:'work',duration:workTimeInSecs}, {type:'breaktime',duration:breakTimeInSecs}];
+  var periods = [{type:'Session',duration:workTimeInSecs}, {type:'Break',duration:breakTimeInSecs}];
   var active = periods[0];
   var remaining = active.duration;
   this.start = function(process) {
@@ -9,7 +9,7 @@ var Pomodoro = function(workTimeInSecs, breakTimeInSecs){
         process();
         remaining -= 1;
         if (remaining < 0){
-          if (active.type == 'work')
+          if (active.type == 'Session')
             active = periods[1];
           else
             active = periods[0];
@@ -24,25 +24,26 @@ var Pomodoro = function(workTimeInSecs, breakTimeInSecs){
     }
   };
   this.setWorkDuration = function(num) {
-    periods[0].duration = num < 60 ? 60 : num;
-    if (active.type == 'work')
+    periods[0].duration = num < 1 ? 60 : num * 60;
+    if (active.type == 'Session')
       remaining = active.duration;
   };
   this.setBreaktimeDuration = function(num) {
-    periods[1].duration = num < 60 ? 60 : num;
-    if (active.type == 'breaktime')
+    periods[1].duration = num < 1 ? 60 : num * 60;
+    if (active.type == 'Break')
       remaining = active.duration;
   };
   this.getWorkDuration = function() {
-    return periods[0].duration;
+    return periods[0].duration / 60;
   };
   this.getBreaktimeDuration = function() {
-    return periods[1].duration;
+    return periods[1].duration / 60;
   };
   this.getRemaining = function() {
-    var min = Math.floor(remaining/60);
+    var hour = Math.floor(remaining/3600);
+    var min = Math.floor((remaining%3600)/60);
     var sec = remaining % 60;
-    return (min > 9 ? min : '0' + min) + ':' + (sec > 9 ? sec : '0' + sec);
+    return (hour > 9 ? hour : '0' + hour) + ':' + (min > 9 ? min : '0' + min) + ':' + (sec > 9 ? sec : '0' + sec);
   };
   this.getType = function() {
     return active.type;
@@ -59,36 +60,37 @@ document.addEventListener("DOMContentLoaded", function(){
   var started = false;
 
   document.getElementById('work-minus').onclick = function(){
-    pomodoro.setWorkDuration(pomodoro.getWorkDuration() - 60);
-    document.getElementById('work-minutes').innerHTML = pomodoro.getWorkDuration() / 60;
-    if (pomodoro.getType() == "work")
-      document.getElementById('timer-display').innerHTML = (pomodoro.getWorkDuration() >= 600 ? pomodoro.getWorkDuration() /60 : '0' + pomodoro.getWorkDuration() /60) + ':00';
+    pomodoro.setWorkDuration(pomodoro.getWorkDuration() - 1);
+    document.getElementById('work-minutes').innerHTML = pomodoro.getWorkDuration();
+    if (pomodoro.getType() == "Session")
+      document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
   };
 
   document.getElementById('work-plus').onclick = function(){
-    pomodoro.setWorkDuration(pomodoro.getWorkDuration() + 60);
-    document.getElementById('work-minutes').innerHTML = pomodoro.getWorkDuration() / 60;
+    pomodoro.setWorkDuration(pomodoro.getWorkDuration() + 1);
+    document.getElementById('work-minutes').innerHTML = pomodoro.getWorkDuration();
     if (pomodoro.getType() == "work")
-      document.getElementById('timer-display').innerHTML = (pomodoro.getWorkDuration() >= 600 ? pomodoro.getWorkDuration() / 60 : '0' + pomodoro.getWorkDuration() / 60) + ':00';
+      document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
   };
 
   document.getElementById('break-minus').onclick = function(){
-    pomodoro.setBreaktimeDuration(pomodoro.getBreaktimeDuration() - 60);
-    document.getElementById('break-minutes').innerHTML = pomodoro.getBreaktimeDuration() / 60;
-    if (pomodoro.getType() == "breaktime")
-      document.getElementById('timer-display').innerHTML = (pomodoro.getBreaktimeDuration() >= 600 ? pomodoro.getBreaktimeDuration() / 60 : '0' + pomodoro.getBreaktimeDuration() / 60) + ':00';
+    pomodoro.setBreaktimeDuration(pomodoro.getBreaktimeDuration() - 1);
+    document.getElementById('break-minutes').innerHTML = pomodoro.getBreaktimeDuration();
+    if (pomodoro.getType() == "Break")
+      document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
   };
 
   document.getElementById('break-plus').onclick = function(){
-    pomodoro.setBreaktimeDuration(pomodoro.getBreaktimeDuration() + 60);
-    document.getElementById('break-minutes').innerHTML = pomodoro.getBreaktimeDuration() / 60;
-    if (pomodoro.getType() == "breaktime")
-      document.getElementById('timer-display').innerHTML = (pomodoro.getBreaktimeDuration() >= 600 ? pomodoro.getBreaktimeDuration() / 60 : '0' + pomodoro.getBreaktimeDuration() / 60) + ':00';
+    pomodoro.setBreaktimeDuration(pomodoro.getBreaktimeDuration() + 1);
+    document.getElementById('break-minutes').innerHTML = pomodoro.getBreaktimeDuration();
+    if (pomodoro.getType() == "Break")
+      document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
   };
 
   document.getElementById('run-pause').onclick = function(){
     if (document.getElementById('run-pause').className == 'paused') {
       pomodoro.start(function(){
+        document.getElementById('period-label').innerHTML = pomodoro.getType();
         document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
       });
       document.getElementById('run-pause').className = 'running';
@@ -102,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById('reset').onclick = function(){
     pomodoro.stop();
     pomodoro.reset();
+    document.getElementById('period-label').innerHTML = pomodoro.getType();
     document.getElementById('timer-display').innerHTML = pomodoro.getRemaining();
     document.getElementById('run-pause').className = 'paused';
     document.getElementById('run-pause').innerHTML = 'Start';
